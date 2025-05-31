@@ -1,43 +1,47 @@
+import os
 from telegram import Update
-from telegram.ext import (
-    ApplicationBuilder, ContextTypes,
-    MessageHandler, CommandHandler, filters
-)
-from config import TELEGRAM_BOT_TOKEN
-from ai_handler import ask_jarvis
+from telegram.ext import ApplicationBuilder, ContextTypes, MessageHandler, CommandHandler, filters
+import openai
 
-# /start komandası üçün cavab
-async def start_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    await update.message.reply_text(
-        "Salam! Mən Jarvis. Mənə istədiyin sualı verə bilərsən və mən sənə "
-        "mümkün qədər aydın və maraqlı cavab verməyə çalışacağam. Başlayaq? 😊"
-    )
+# OpenAI API açarını environment-dən götür
+openai.api_key = os.getenv("OPENAI_API_KEY")
 
-# İstifadəçinin adi mesajları üçün cavab
-async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    user_message = update.message.text
-    response = ask_jarvis(user_message)
-    await update.message.reply_text(response)
+async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    await update.message.reply_text("Salam! Mən Jarvisəm, sənə necə kömək edə bilərəm?")
+
+def ask_jarvis(prompt):
+    try:
+        response = openai.ChatCompletion.create(
+            model="gpt-3.5-turbo",
+            messages=[{"role": "user", "content": prompt}]
+        )
+        reply = response.choices[0].message.content
+        return reply
+    except Exception as e:
+        print(f"OpenAI API xətası: {e}")
+        return "Bağışlayın, cavab alınarkən xəta baş verdi."
 
 async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
     try:
         user_message = update.message.text
-        response = ask_jarvis(user_message)
-        await update.message.reply_text(response)
+        print(f"İstifadəçi mesajı: {user_message}")
+        reply = ask_jarvis(user_message)
+        print(f"Jarvis cavabı: {reply}")
+        await update.message.reply_text(reply)
     except Exception as e:
-        print(f"Xəta baş verdi: {e}")
+        print(f"Telegram mesajında xəta: {e}")
         await update.message.reply_text("Bağışlayın, sistemdə xəta baş verdi. Bir az sonra yenidən cəhd edin.")
 
+async def telegram_bot_main():
+    token = os.getenv("BOT_TOKEN")
+    if not token:
+        print("Xəta: BOT_TOKEN təyin olunmayıb!")
+        return
 
-# Botu işə salan funksiya
-async def run_bot():
-    app = ApplicationBuilder().token(TELEGRAM_BOT_TOKEN).build()
+    app = ApplicationBuilder().token(token).build()
 
-    # /start komandası üçün handler
-    app.add_handler(CommandHandler("start", start_command))
+    app.add_handler(CommandHandler("start", start))
+    app.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, handle_message))
 
-    # Sadə mesajlar üçün handler
-    app.add_handler(MessageHandler(filters.TEXT & (~filters.COMMAND), handle_message))
-
-    print("Jarvis işə düşdü.")
+    print("Telegram bot işə düşür...")
     await app.run_polling()
