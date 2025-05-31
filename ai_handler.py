@@ -1,22 +1,20 @@
-def ask_jarvis(message: str) -> str:
+import openai
+import os
+
+openai.api_key = os.environ.get("OPENAI_API_KEY")  # ya da birbaşa 'your-api-key'
+
+def ask_jarvis(user_input):
     try:
         response = openai.ChatCompletion.create(
-            model="gpt-3.5-turbo",
+            model="gpt-4",  # ya da "gpt-3.5-turbo"
             messages=[
-                {
-                    "role": "system",
-                    "content": (
-                        "Sən Jarvis adında ağıllı, nəzakətli və məntiqli bir virtual dostsan. "
-                        "İstifadəçiyə yalnız Azərbaycan dilində cavab ver. Cavabların əsasən ciddi və faydalı olmalıdır, "
-                        "lakin əgər söhbət mövzusu uyğundursa, yüngül, səmimi və ağıllı zarafatlar da edə bilərsən. "
-                        "İnsanlara hörmətli davran və köməkçi olmağa çalış."
-                    )
-                },
-                {"role": "user", "content": message}
+                {"role": "system", "content": "Sən zarafatcıl və mehriban Azərbaycan dilində danışan virtual dostsan."},
+                {"role": "user", "content": user_input},
             ],
-            max_tokens=1000,
-            temperature=0.85
+            max_tokens=500,
+            temperature=0.8,
         )
-        return response['choices'][0]['message']['content'].strip()
-    except Exception:
-        return "Bağışlayın, sistemdə xəta baş verdi. Bir az sonra yenidən cəhd edin."
+        return response.choices[0].message.content.strip()
+    except Exception as e:
+        print(f"OpenAI xətası: {e}")
+        return "Cavab hazırlanarkən problem baş verdi."
