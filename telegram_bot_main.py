@@ -1,47 +1,32 @@
-import os
-from telegram import Update
-from telegram.ext import ApplicationBuilder, ContextTypes, MessageHandler, CommandHandler, filters
+from flask import Flask, request
+import telegram
 import openai
+import os
 
-# OpenAI API açarını environment-dən götür
-openai.api_key = os.getenv("OPENAI_API_KEY")
+app = Flask(__name__)
 
-async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    await update.message.reply_text("Salam! Mən Jarvisəm, sənə necə kömək edə bilərəm?")
+TELEGRAM_TOKEN = os.environ.get("TELEGRAM_TOKEN")
+OPENAI_API_KEY = os.environ.get("OPENAI_API_KEY")
 
-def ask_jarvis(prompt):
-    try:
+bot = telegram.Bot(token=TELEGRAM_TOKEN)
+openai.api_key = OPENAI_API_KEY
+
+@app.route('/webhook', methods=["POST"])
+def webhook():
+    update = telegram.Update.de_json(request.get_json(force=True), bot)
+    
+    if update.message and update.message.text:
+        user_message = update.message.text
+        chat_id = update.message.chat.id
+
+        # OpenAI ilə cavab al
         response = openai.ChatCompletion.create(
             model="gpt-3.5-turbo",
-            messages=[{"role": "user", "content": prompt}]
+            messages=[{"role": "user", "content": user_message}]
         )
         reply = response.choices[0].message.content
-        return reply
-    except Exception as e:
-        print(f"OpenAI API xətası: {e}")
-        return "Bağışlayın, cavab alınarkən xəta baş verdi."
 
-async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    try:
-        user_message = update.message.text
-        print(f"İstifadəçi mesajı: {user_message}")
-        reply = ask_jarvis(user_message)
-        print(f"Jarvis cavabı: {reply}")
-        await update.message.reply_text(reply)
-    except Exception as e:
-        print(f"Telegram mesajında xəta: {e}")
-        await update.message.reply_text("Bağışlayın, sistemdə xəta baş verdi. Bir az sonra yenidən cəhd edin.")
-
-async def telegram_bot_main():
-    token = os.getenv("BOT_TOKEN")
-    if not token:
-        print("Xəta: BOT_TOKEN təyin olunmayıb!")
-        return
-
-    app = ApplicationBuilder().token(token).build()
-
-    app.add_handler(CommandHandler("start", start))
-    app.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, handle_message))
-
-    print("Telegram bot işə düşür...")
-    await app.run_polling()
+        # Cavabı göndər
+        bot.send_message(chat_id=chat_id, text=reply)
+        
+    return "ok"
