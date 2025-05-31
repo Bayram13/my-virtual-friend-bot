@@ -1,20 +1,12 @@
 from flask import Flask
-import threading
-import asyncio
-from telegram_bot_main import main as telegram_bot_main
+from telegram_bot_main import app as telegram_bot_app  # webhook'u ordan alırıq
 
 app = Flask(__name__)
 
 @app.route('/')
-def home():
-    return "Jarvis  serveri işləyir!"
+def index():
+    return "Telegram bot is running!"  # Sadə test üçün homepage
 
-# Telegram botu ayrıca thread-də işə sal
-def run_bot():
-    asyncio.run(telegram_bot_main())
-
-# Server başladıqda bot da başlasın
-threading.Thread(target=run_bot).start()
-
-if __name__ == '__main__':
-    app.run()
+# gunicorn istifadə etdiyimiz üçün aşağıdakı hissəyə ehtiyac yoxdur:
+# if __name__ == "__main__":
+#     app.run(debug=True)
