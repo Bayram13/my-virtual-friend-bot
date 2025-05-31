@@ -1,0 +1,11 @@
+services:
+  - type: web
+    name: virtual-dost-bot
+    env: python
+    buildCommand: ""
+    startCommand: python main.py
+    envVars:
+      - key: TELEGRAM_BOT_TOKEN
+        value: YOUR_TELEGRAM_BOT_TOKEN
+      - key: OPENAI_API_KEY
+        value: YOUR_OPENAI_API_KEY
