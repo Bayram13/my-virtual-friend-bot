@@ -19,6 +19,16 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
     response = ask_jarvis(user_message)
     await update.message.reply_text(response)
 
+async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    try:
+        user_message = update.message.text
+        response = ask_jarvis(user_message)
+        await update.message.reply_text(response)
+    except Exception as e:
+        print(f"Xəta baş verdi: {e}")
+        await update.message.reply_text("Bağışlayın, sistemdə xəta baş verdi. Bir az sonra yenidən cəhd edin.")
+
+
 # Botu işə salan funksiya
 async def run_bot():
     app = ApplicationBuilder().token(TELEGRAM_BOT_TOKEN).build()
