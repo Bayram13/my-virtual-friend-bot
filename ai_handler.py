@@ -1,19 +1,22 @@
-import openai
-from config import OPENAI_API_KEY
-
-openai.api_key = OPENAI_API_KEY
-
 def ask_jarvis(message: str) -> str:
     try:
         response = openai.ChatCompletion.create(
-            model="gpt-3.5-turbo",  # istəyirsənsə GPT-4-ə dəyişə bilərsən
+            model="gpt-3.5-turbo",
             messages=[
-                {"role": "system", "content": "Sən virtual dostsan və istifadəçiyə Azərbaycan dilində səmimi şəkildə cavab verirsən."},
+                {
+                    "role": "system",
+                    "content": (
+                        "Sən Jarvis adında ağıllı, nəzakətli və məntiqli bir virtual dostsan. "
+                        "İstifadəçiyə yalnız Azərbaycan dilində cavab ver. Cavabların əsasən ciddi və faydalı olmalıdır, "
+                        "lakin əgər söhbət mövzusu uyğundursa, yüngül, səmimi və ağıllı zarafatlar da edə bilərsən. "
+                        "İnsanlara hörmətli davran və köməkçi olmağa çalış."
+                    )
+                },
                 {"role": "user", "content": message}
             ],
             max_tokens=1000,
-            temperature=0.8
+            temperature=0.85
         )
         return response['choices'][0]['message']['content'].strip()
-    except Exception as e:
-        return "Bağışla, bir xəta baş verdi. Bir az sonra yenidən cəhd et."
+    except Exception:
+        return "Bağışlayın, sistemdə xəta baş verdi. Bir az sonra yenidən cəhd edin."
