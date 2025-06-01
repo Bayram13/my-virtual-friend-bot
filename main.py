@@ -10,7 +10,8 @@ OPENAI_API_KEY = os.environ.get("OPENAI_API_KEY")
 
 bot = telegram.Bot(token=TELEGRAM_TOKEN)
 
-client = openai.OpenAI(api_key=OPENAI_API_KEY)
+# OpenAI API açarını təyin et
+openai.api_key = OPENAI_API_KEY
 
 @app.route('/')
 def index():
@@ -26,14 +27,15 @@ def webhook():
             user_message = update.message.text
             chat_id = update.message.chat.id
 
-            # Yeni OpenAI metodu ilə cavab al
-            response = client.chat.completions.create(
+            # OpenAI API çağırışı
+            response = openai.ChatCompletion.create(
                 model="gpt-3.5-turbo",
                 messages=[
                     {"role": "user", "content": user_message}
                 ]
             )
-            reply = response.choices[0].message.content
+
+            reply = response['choices'][0]['message']['content']
             bot.send_message(chat_id=chat_id, text=reply)
 
         return "ok"
